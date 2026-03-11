@@ -7,8 +7,8 @@
   <style>
     :root {
       color-scheme: light;
-      --surface: rgba(255, 255, 255, 0.8);
-      --surface-strong: rgba(255, 255, 255, 0.94);
+      --surface: rgba(255, 255, 255, 0.82);
+      --surface-strong: rgba(255, 255, 255, 0.95);
       --stroke: rgba(15, 23, 42, 0.08);
       --stroke-soft: rgba(255, 255, 255, 0.84);
       --text: #111827;
@@ -17,6 +17,8 @@
       --radius-shell: 34px;
       --radius-panel: 24px;
       --radius-input: 20px;
+      --panel-header-height: 76px;
+      --panel-field-height: 320px;
     }
 
     * {
@@ -84,14 +86,17 @@
       grid-template-columns: 1.15fr 0.85fr;
       gap: 20px;
       padding: 8px 24px 24px;
+      align-items: stretch;
     }
 
     .panel {
+      display: grid;
+      grid-template-rows: var(--panel-header-height) var(--panel-field-height) auto;
+      gap: 18px;
       background: var(--surface-strong);
       border: 1px solid var(--stroke);
       border-radius: var(--radius-panel);
       padding: 24px;
-      position: relative;
     }
 
     .panel-head {
@@ -99,7 +104,11 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 18px;
+      min-width: 0;
+    }
+
+    .panel-copy {
+      min-width: 0;
     }
 
     .panel-title {
@@ -112,12 +121,14 @@
     .panel-note {
       margin: 6px 0 0;
       font-size: 13px;
+      line-height: 1.6;
       color: var(--muted);
     }
 
     textarea,
     .result-box {
       width: 100%;
+      height: 100%;
       border: 1px solid rgba(15, 23, 42, 0.06);
       border-radius: var(--radius-input);
       background: linear-gradient(180deg, #fbfcfe 0%, #f3f6fa 100%);
@@ -126,12 +137,11 @@
       font-size: 16px;
       line-height: 1.8;
       outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
 
     textarea {
-      min-height: 320px;
-      resize: vertical;
+      resize: none;
       font-family: inherit;
     }
 
@@ -144,13 +154,23 @@
       color: #98a2b3;
     }
 
-    .toolbar {
-      margin-top: 18px;
+    .result-box {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+    }
+
+    .result-empty {
+      color: #98a2b3;
+    }
+
+    .toolbar,
+    .footer {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
       align-items: center;
       justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
     }
 
     .segmented {
@@ -170,7 +190,7 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.18s ease;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
     }
 
     .mode-button {
@@ -191,6 +211,7 @@
       background: #ffffff;
       color: var(--text);
       box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+      white-space: nowrap;
     }
 
     .ghost-button:hover,
@@ -203,6 +224,8 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-shrink: 0;
+      padding-top: 2px;
       font-size: 12px;
       color: var(--muted);
       white-space: nowrap;
@@ -215,28 +238,12 @@
       background: linear-gradient(135deg, #111827, #94a3b8);
     }
 
-    .result-box {
-      min-height: 320px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .result-empty {
-      color: #98a2b3;
-    }
-
-    .footer {
-      margin-top: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
+    .copy-tip {
+      flex: 1;
+      min-width: 0;
+      min-height: 20px;
       color: var(--muted);
       font-size: 13px;
-    }
-
-    .copy-tip {
-      min-height: 20px;
     }
 
     @media (max-width: 900px) {
@@ -263,14 +270,19 @@
       }
 
       .panel {
+        grid-template-rows: auto 320px auto;
         padding: 18px;
       }
 
+      .panel-head,
       .toolbar,
-      .footer,
-      .panel-head {
+      .footer {
         flex-direction: column;
         align-items: stretch;
+      }
+
+      .result-meta {
+        white-space: normal;
       }
 
       .segmented {
@@ -281,10 +293,6 @@
       .ghost-button,
       .copy-button {
         width: 100%;
-      }
-
-      .result-meta {
-        white-space: normal;
       }
     }
   </style>
@@ -299,7 +307,7 @@
     <section class="workspace">
       <section class="panel">
         <div class="panel-head">
-          <div>
+          <div class="panel-copy">
             <h2 class="panel-title">原始文本</h2>
             <p class="panel-note">重点输入区域，支持单词、句子或多段内容</p>
           </div>
@@ -319,9 +327,9 @@
 
       <section class="panel">
         <div class="panel-head">
-          <div>
+          <div class="panel-copy">
             <h2 class="panel-title">转换结果</h2>
-            <p class="panel-note">根据当前模式自动输出处理后的文本</p>
+            <p class="panel-note">根据选择模式自动输出文本</p>
           </div>
           <div class="result-meta">
             <span class="status-dot"></span>
@@ -389,11 +397,7 @@
     actionButtons.forEach((button) => {
       button.addEventListener("click", () => {
         currentMode = button.dataset.mode;
-
-        actionButtons.forEach((item) => {
-          item.classList.toggle("active", item === button);
-        });
-
+        actionButtons.forEach((item) => item.classList.toggle("active", item === button));
         renderResult();
       });
     });
